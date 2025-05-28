@@ -4,9 +4,13 @@
 import React, { useState, useEffect } from "react";
 import JobCard from "@/components/JobCard";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Search, FileText } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { FileUpload } from "primereact/fileupload";
+import "primereact/resources/themes/lara-light-indigo/theme.css";
+import "primereact/resources/primereact.min.css";
 
 export default function Home() {
   const [selectedFileName, setSelectedFileName] = useState<string>("");
@@ -67,28 +71,35 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="mb-10 flex justify-center items-center space-x-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <label htmlFor="resume-upload" className="cursor-pointer">
-              <button className="flex items-center gap-3 rounded-full px-6 py-3 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform">
-                <FileText className="w-5 h-5" />
-                Upload Resume
-              </button>
-            </label>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Find jobs tailored to your resume</p>
-          </TooltipContent>
-        </Tooltip>
-        <span className="text-gray-700 font-medium truncate max-w-xs">{selectedFileName}</span>
-        <input
-          id="resume-upload"
-          type="file"
-          accept=".pdf,.doc,.docx"
-          className="hidden"
-          onChange={onFileChange}
-        />
+      <div className="mb-10 flex flex-col items-center justify-center text-center">
+        <div className="flex justify-center w-full">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full max-w-md text-center">
+                <FileUpload
+                  name="resume"
+                  mode="basic"
+                  chooseLabel="Upload Resume"
+                  accept=".pdf,.doc,.docx"
+                  customUpload
+                  uploadHandler={(e) => {
+                    if (e.files && e.files.length > 0) {
+                      setSelectedFileName(e.files[0].name);
+                    }
+                  }}
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-center">
+              <p>Find jobs tailored to your resume</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        {selectedFileName && (
+          <div className="mt-2 text-center text-neutral-700 text-sm">
+            {selectedFileName}
+          </div>
+        )}
       </div>
 
       {/* Job List */}
