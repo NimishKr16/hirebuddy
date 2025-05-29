@@ -24,4 +24,5 @@ model Job {
   source      String
   createdAt   DateTime @default(now())
   embedding   Float[]
+searchVector Unsupported("tsvector")
 }

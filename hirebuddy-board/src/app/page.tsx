@@ -14,12 +14,43 @@ import {
 import { Progress } from "@/components/ui/progress";
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [progress, setProgress] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function handleSearch() {
+    if (!searchQuery.trim()) {
+      // If query is empty, fetch all jobs again
+      setLoading(true);
+      try {
+        const res = await fetch("/api/jobs");
+        if (!res.ok) throw new Error("Failed to fetch jobs");
+        const data = await res.json();
+        setJobs(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/search?query=${encodeURIComponent(searchQuery)}`);
+      if (!res.ok) throw new Error("Failed to search jobs");
+      const data = await res.json();
+      setJobs(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     if (event.target.files && event.target.files.length > 0) {
@@ -97,6 +128,13 @@ export default function Home() {
           <Input
             type="text"
             placeholder="Search jobs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearch();
+              }
+            }}
             className="pl-10 py-2.5 rounded-lg shadow-sm border-gray-300 focus:ring-neutral-500 focus:border-neutral-500"
           />
           <Search className="absolute left-3 top-2 h-5 w-5 text-gray-400" />
