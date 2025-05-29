@@ -1,22 +1,54 @@
 // src/app/page.tsx
 "use client";
-
-import React, { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import React, { useState, useEffect, useRef } from "react";
 import JobCard from "@/components/JobCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, FileText } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
-import { FileUpload } from "primereact/fileupload";
-import "primereact/resources/themes/lara-light-indigo/theme.css";
-import "primereact/resources/primereact.min.css";
 
 export default function Home() {
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [progress, setProgress] = useState(0);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      setSelectedFileName(file.name);
+
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      setLoading(true);
+      try {
+        const res = await fetch("/api/match-resume", {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) throw new Error("Failed to match jobs");
+
+        const matchedJobs = await res.json();
+        setJobs(matchedJobs);
+
+        toast.success("Found relevant jobs using AI 🤖");
+
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
 
   useEffect(() => {
     async function fetchJobs() {
@@ -76,18 +108,24 @@ export default function Home() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="w-full max-w-md text-center">
-                <FileUpload
-                  name="resume"
-                  mode="basic"
-                  chooseLabel="Upload Resume"
-                  accept=".pdf,.doc,.docx"
-                  customUpload
-                  uploadHandler={(e) => {
-                    if (e.files && e.files.length > 0) {
-                      setSelectedFileName(e.files[0].name);
-                    }
-                  }}
-                />
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 rounded-full px-6 py-2 text-lg font-semibold bg-gradient-to-r from-green-400 to-blue-500 text-white hover:from-green-500 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Upload Resume
+                  </Button>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-center">
@@ -106,8 +144,13 @@ export default function Home() {
       <div className="flex flex-col items-center space-y-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center w-full gap-2 py-10">
-            <Progress value={progress} className="w-1/2 animate-pulse h-3 bg-neutral-200" />
-            <span className="text-neutral-600 font-medium text-sm">Loading jobs...</span>
+            <Progress
+              value={progress}
+              className="w-1/2 animate-pulse h-3 bg-neutral-200"
+            />
+            <span className="text-neutral-600 font-medium text-sm">
+              Loading jobs...
+            </span>
           </div>
         ) : (
           jobs.map((job: any) => <JobCard key={job.id} job={job} />)
