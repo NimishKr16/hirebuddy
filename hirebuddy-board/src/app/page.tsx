@@ -3,9 +3,10 @@
 import { toast } from "react-hot-toast";
 import React, { useState, useEffect, useRef } from "react";
 import JobCard from "@/components/JobCard";
+import FilterGroup from "@/components/FilterGroup";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileText } from "lucide-react";
+import { Search, FileText, Filter, FunnelPlus, SlidersHorizontal} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -15,12 +16,40 @@ import { Progress } from "@/components/ui/progress";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [progress, setProgress] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Filters visibility state and ref
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  const [locationFilter, setLocationFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<string | null>(null);
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        filterRef.current &&
+        !filterRef.current.contains(event.target as Node)
+      ) {
+        setFilterOpen(false);
+      }
+    }
+    if (filterOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [filterOpen]);
 
   async function handleSearch() {
     if (!searchQuery.trim()) {
@@ -39,9 +68,33 @@ export default function Home() {
       return;
     }
 
+    // Add query to search history if not duplicate and not empty
+    setSearchHistory((prev) => {
+      const normalized = searchQuery.trim();
+      if (!normalized || prev.includes(normalized)) return prev;
+      return [normalized, ...prev];
+    });
+
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?query=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(
+        `/api/search?query=${encodeURIComponent(searchQuery)}`
+      );
+      if (!res.ok) throw new Error("Failed to search jobs");
+      const data = await res.json();
+      setJobs(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleHistoryClick(query: string) {
+    setSearchQuery(query);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
       if (!res.ok) throw new Error("Failed to search jobs");
       const data = await res.json();
       setJobs(data);
@@ -72,7 +125,6 @@ export default function Home() {
         setJobs(matchedJobs);
 
         toast.success("Found relevant jobs using AI 🤖");
-
       } catch (error) {
         console.error(error);
       } finally {
@@ -122,9 +174,9 @@ export default function Home() {
         Hirebuddy
       </h1>
 
-      {/* Search Bar */}
-      <div className="mb-8 flex justify-center">
-        <div className="relative w-full max-w-2xl">
+      {/* Search Bar with Filter Button */}
+      <div className="mb-4 flex justify-center relative">
+        <div className="relative flex w-full max-w-2xl">
           <Input
             type="text"
             placeholder="Search jobs..."
@@ -135,12 +187,68 @@ export default function Home() {
                 handleSearch();
               }
             }}
-            className="pl-10 py-2.5 rounded-lg shadow-sm border-gray-300 focus:ring-neutral-500 focus:border-neutral-500"
+            className="pl-10 py-2.5 rounded-l-lg shadow-sm border-gray-300 focus:ring-neutral-500 focus:border-neutral-500 flex-grow"
           />
-          <Search className="absolute left-3 top-2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-2 h-5 w-5 text-gray-400 pointer-events-none" />
+          <Button
+            variant="outline"
+            className="rounded-r-lg px-4 flex items-center justify-center border-l-0"
+            onClick={() => setFilterOpen((prev) => !prev)}
+          >
+            <SlidersHorizontal className="h-5 w-5 text-gray-600" />
+          </Button>
         </div>
+
+        {/* FilterGroup dropdown */}
+        {filterOpen && (
+          <div ref={filterRef} className="absolute top-full right-0 mt-2 z-50">
+            <FilterGroup
+              location={locationFilter}
+              setLocation={setLocationFilter}
+              type={typeFilter}
+              setType={setTypeFilter}
+              source={sourceFilter}
+              setSource={setSourceFilter}
+            />
+          </div>
+        )}
       </div>
 
+      {/* Search History Bubbles */}
+      {searchHistory.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2 justify-center max-w-2xl mx-auto">
+          {searchHistory.map((query, index) => (
+            <div
+              key={index}
+              className="flex items-center cursor-pointer select-none rounded-full bg-neutral-200 px-4 py-1 text-sm font-medium text-neutral-800 hover:bg-neutral-300 transition"
+              aria-label={`Search for ${query}`}
+            >
+              <button
+                onClick={() => handleHistoryClick(query)}
+                type="button"
+                className="outline-none"
+              >
+                {query}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearchHistory((prev) =>
+                    prev.filter((_, i) => i !== index)
+                  );
+                }}
+                type="button"
+                aria-label={`Remove search query ${query}`}
+                className="ml-2 text-neutral-500 hover:text-neutral-700 font-bold text-lg leading-none focus:outline-none"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Rest of your content (upload button, job list, etc.) unchanged */}
       <div className="mb-10 flex flex-col items-center justify-center text-center">
         <div className="flex justify-center w-full">
           <Tooltip>
