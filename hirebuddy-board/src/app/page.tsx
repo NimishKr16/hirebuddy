@@ -301,11 +301,11 @@ export default function Home() {
       )}
 
       {/* Manual trigger for filter search (for testing) */}
-      <div className="mb-4 flex justify-center">
+      {/* <div className="mb-4 flex justify-center">
         <Button variant="outline" onClick={handleFilterSearch}>
           🔍 Manually Trigger Filter Search
         </Button>
-      </div>
+      </div> */}
 
       {/* Rest of your content (upload button, job list, etc.) unchanged */}
       <div className="mb-10 flex flex-col items-center justify-center text-center">

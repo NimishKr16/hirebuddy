@@ -31,10 +31,10 @@ export async function GET(req: Request) {
               }
             : type === "in-office"
             ? {
-                location: {
-                  not: {
+                NOT: {
+                  location: {
                     contains: "Remote",
-                    mode: "default",
+                    mode: "insensitive",
                   },
                 },
               }
