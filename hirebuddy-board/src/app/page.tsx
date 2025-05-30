@@ -6,7 +6,13 @@ import JobCard from "@/components/JobCard";
 import FilterGroup from "@/components/FilterGroup";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileText, Filter, FunnelPlus, SlidersHorizontal} from "lucide-react";
+import {
+  Search,
+  FileText,
+  Filter,
+  FunnelPlus,
+  SlidersHorizontal,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +37,22 @@ export default function Home() {
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<string | null>(null);
+
+  // Wrapper setter functions for filters to log and set state
+  const setLocationFilterWrapper = (val: string | null) => {
+    console.log("Location selected:", val);
+    setLocationFilter(val);
+  };
+
+  const setTypeFilterWrapper = (val: string | null) => {
+    console.log("Type selected:", val);
+    setTypeFilter(val);
+  };
+
+  const setSourceFilterWrapper = (val: string | null) => {
+    console.log("Source selected:", val);
+    setSourceFilter(val);
+  };
   // Close filter dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -105,6 +127,31 @@ export default function Home() {
     }
   }
 
+  // Independent filtering logic
+  async function handleFilterSearch() {
+    console.log("🔍 Triggered handleFilterSearch()");
+    console.log("locationFilter:", locationFilter);
+    console.log("typeFilter:", typeFilter);
+    console.log("sourceFilter:", sourceFilter);
+
+    const params = new URLSearchParams();
+    if (locationFilter) params.append("location", locationFilter);
+    if (typeFilter) params.append("type", typeFilter);
+    if (sourceFilter) params.append("source", sourceFilter);
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/filter?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch filtered jobs");
+      const data = await res.json();
+      setJobs(data);
+    } catch (error) {
+      console.error("❌ Error during filter search:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
@@ -148,6 +195,11 @@ export default function Home() {
     }
     fetchJobs();
   }, []);
+
+  // Always call handleFilterSearch on any filter change
+  useEffect(() => {
+    handleFilterSearch();
+  }, [locationFilter, typeFilter, sourceFilter]);
 
   useEffect(() => {
     if (loading) {
@@ -200,18 +252,18 @@ export default function Home() {
         </div>
 
         {/* FilterGroup dropdown */}
-        {filterOpen && (
-          <div ref={filterRef} className="absolute top-full right-0 mt-2 z-50">
+        
+          <div ref={filterRef} style={{ display: filterOpen ? "block" : "none" }} className="absolute top-full right-0 mt-2 z-50">
             <FilterGroup
               location={locationFilter}
-              setLocation={setLocationFilter}
+              setLocation={setLocationFilterWrapper}
               type={typeFilter}
-              setType={setTypeFilter}
+              setType={setTypeFilterWrapper}
               source={sourceFilter}
-              setSource={setSourceFilter}
+              setSource={setSourceFilterWrapper}
             />
           </div>
-        )}
+        
       </div>
 
       {/* Search History Bubbles */}
@@ -247,6 +299,13 @@ export default function Home() {
           ))}
         </div>
       )}
+
+      {/* Manual trigger for filter search (for testing) */}
+      <div className="mb-4 flex justify-center">
+        <Button variant="outline" onClick={handleFilterSearch}>
+          🔍 Manually Trigger Filter Search
+        </Button>
+      </div>
 
       {/* Rest of your content (upload button, job list, etc.) unchanged */}
       <div className="mb-10 flex flex-col items-center justify-center text-center">
@@ -305,3 +364,5 @@ export default function Home() {
     </main>
   );
 }
+
+  

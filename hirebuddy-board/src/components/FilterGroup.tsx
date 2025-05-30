@@ -1,6 +1,6 @@
 // src/components/FilterGroup.tsx
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Select,
   SelectTrigger,
@@ -44,6 +44,9 @@ export default function FilterGroup({
   source,
   setSource,
 }: FilterGroupProps) {
+  useEffect(() => {
+    console.log("FilterGroup props:", { location, type, source });
+  }, [location, type, source]);
   return (
     <div className="bg-white shadow-lg rounded-md p-4 w-72 space-y-4">
       {/* Location */}
@@ -53,7 +56,7 @@ export default function FilterGroup({
         </label>
         <Select
           value={location ?? ""}
-          onValueChange={(val) => setLocation(val || null)}
+          onValueChange={(val) => setLocation(val)}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select location" />
@@ -75,7 +78,7 @@ export default function FilterGroup({
         </label>
         <Select
           value={type ?? ""}
-          onValueChange={(val) => setType(val || null)}
+          onValueChange={(val) => setType(val)}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select type" />
@@ -97,7 +100,7 @@ export default function FilterGroup({
         </label>
         <Select
           value={source ?? ""}
-          onValueChange={(val) => setSource(val || null)}
+          onValueChange={(val) => setSource(val)}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select source" />
