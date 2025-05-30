@@ -346,7 +346,7 @@ export default function Home() {
       </div>
 
       {/* Job List */}
-      <div className="flex flex-col items-center space-y-6">
+      <div className="flex flex-col items-center space-y-6 min-h-[200px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center w-full gap-2 py-10">
             <Progress
@@ -357,6 +357,12 @@ export default function Home() {
               Loading jobs...
             </span>
           </div>
+        ) : jobs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center w-full gap-2 py-10">
+            <p className="text-neutral-500 text-lg font-semibold">
+              No Jobs Match Your Query
+            </p>
+          </div>
         ) : (
           jobs.map((job: any) => <JobCard key={job.id} job={job} />)
         )}
@@ -364,5 +370,3 @@ export default function Home() {
     </main>
   );
 }
-
-  
