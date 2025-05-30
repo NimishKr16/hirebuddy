@@ -44,11 +44,8 @@ export default function FilterGroup({
   source,
   setSource,
 }: FilterGroupProps) {
-  useEffect(() => {
-    console.log("FilterGroup props:", { location, type, source });
-  }, [location, type, source]);
   return (
-    <div className="bg-white shadow-lg rounded-md p-4 w-72 space-y-4">
+    <div className="relative bg-white shadow-lg rounded-md p-4 w-72 space-y-4">
       {/* Location */}
       <div>
         <label className="block mb-1 font-semibold text-sm text-gray-700">
